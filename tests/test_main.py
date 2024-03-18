@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from fastapi import HTTPException
 from sqlmodel import SQLModel,Field,Session,create_engine,select
 from fastapi_neon.main import app,get_session,Todo
 from fastapi_neon import settings
@@ -61,7 +62,7 @@ def test_update_main():
         app.dependency_overrides[get_session] = get_session_override
 
         client = TestClient(app=app)
-        todo_id=9
+        todo_id=23
         updated_todo_data={"title":"Updated Title","description":"Updated Description","complete":True}
         response=client.patch(f"/todos/{todo_id}",json=updated_todo_data)
         assert response.status_code == 200
@@ -69,6 +70,24 @@ def test_update_main():
         assert updated_todo["title"]==updated_todo_data["title"]   
         assert updated_todo["description"]==updated_todo_data["description"]   
         assert updated_todo["complete"]==updated_todo_data["complete"]
+def test_update_non_existant_todo():
+    connection_string = str(settings.Test_Data_Base_URL).replace(
+    "postgresql", "postgresql+psycopg")
+    engine = create_engine(connection_string, connect_args={"sslmode": "require"}, pool_recycle=300)
+    SQLModel.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+
+        client = TestClient(app=app)
+        todo_id_non_existant=7
+        updated_todo_data={"title":"Updated Title","description":"Updated Description","complete":True}
+        response=client.patch(f"/todos/{todo_id_non_existant}",json=updated_todo_data)
+        assert response.status_code == 400
+        assert response.json() == {'detail': 'Todo ID not exist'}  
 def test_delete_main():
     connection_string = str(settings.Test_Data_Base_URL).replace(
     "postgresql", "postgresql+psycopg")
@@ -81,6 +100,24 @@ def test_delete_main():
 
         app.dependency_overrides[get_session] = get_session_override
         client=TestClient(app=app)
-        todo_id=9
+        todo_id=21
         response=client.delete(f"/todos/{todo_id}")
         assert response.status_code == 200
+        
+def test_delete_non_existant_todo():
+    connection_string = str(settings.Test_Data_Base_URL).replace(
+    "postgresql", "postgresql+psycopg")
+    engine = create_engine(connection_string, connect_args={"sslmode": "require"}, pool_recycle=300)
+    SQLModel.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client=TestClient(app=app)
+        todo_id_non=15
+        response=client.delete(f"/todos/{todo_id_non}")
+        assert response.status_code == 400
+        assert response.json()=={"detail":"Todo ID not exist"}
+        

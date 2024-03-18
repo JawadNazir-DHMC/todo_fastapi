@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from typing import Union,Optional
 from contextlib import asynccontextmanager
 from sqlmodel import SQLModel,create_engine,Session,Field,select
@@ -47,6 +47,8 @@ def read_todos(session:Session=Depends(get_session)):
 @app.patch("/todos/{todo_id}", response_model=Todo)
 def update_todo(todo_id:int, todo:Todo, session:Session=Depends(get_session)):
     todo_query=session.exec(select(Todo).where(Todo.id==todo_id)).first()
+    if not todo_query:
+        raise HTTPException(status_code=400,detail="Todo ID not exist")
     todo_query.title=todo.title
     todo_query.description=todo.description
     todo_query.complete=todo.complete
@@ -56,6 +58,9 @@ def update_todo(todo_id:int, todo:Todo, session:Session=Depends(get_session)):
 @app.delete("/todos/{todo_id}")
 def delete_todo(todo_id:int, session:Session=Depends(get_session)):
     todo_query=session.exec(select(Todo).where(Todo.id==todo_id)).first()
+    if not todo_query:
+        raise HTTPException(status_code=400,detail="Todo ID not exist")
     session.delete(todo_query)
+
     session.commit()
     return {"message":"Todo Deleted"}
