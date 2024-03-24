@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
 from sqlmodel import SQLModel,Field,Session,create_engine,select
-from fastapi_neon.main import app,get_session,Todo
+from fastapi_neon.database import get_session
+from fastapi_neon.main import app
+from fastapi_neon.model import Todo
 from fastapi_neon import settings
 
 def get_client_with_Override_session():
@@ -38,9 +40,20 @@ def test_read_list_main():
         client=get_client_with_Override_session()
         response=client.get("/todos/")
         assert response.status_code==200
-def test_update_main():
+def test_read_Id():
         client=get_client_with_Override_session()
         todo_id=24
+        response=client.get(f"/todos/{todo_id}")
+        assert response.status_code==200
+def test_read_Id_non_existant():
+        client=get_client_with_Override_session()
+        todo_id=2
+        response=client.get(f"/todos/{todo_id}")
+        assert response.status_code==400
+        assert response.json()== {"detail":"Todo does not exist"}
+def test_update_main():
+        client=get_client_with_Override_session()
+        todo_id=28
         updated_todo_data={"title":"Updated Title","description":"Updated Description","complete":True}
         response=client.patch(f"/todos/{todo_id}",json=updated_todo_data)
         assert response.status_code == 200
@@ -57,7 +70,7 @@ def test_update_non_existant_todo():
         assert response.json() == {'detail': 'Todo ID not exist'}  
 def test_delete_main():
         client=get_client_with_Override_session()
-        todo_id=22
+        todo_id=24
         response=client.delete(f"/todos/{todo_id}")
         assert response.status_code == 200
         
