@@ -42,18 +42,34 @@ def test_read_list_main():
         assert response.status_code==200
 def test_read_Id():
         client=get_client_with_Override_session()
-        todo_id=24
-        response=client.get(f"/todos/{todo_id}")
+        todo_id=32
+        response=client.get(f"/todos/by_id/{todo_id}")
         assert response.status_code==200
 def test_read_Id_non_existant():
         client=get_client_with_Override_session()
         todo_id=2
-        response=client.get(f"/todos/{todo_id}")
+        response=client.get(f"/todos/by_id/{todo_id}")
         assert response.status_code==400
         assert response.json()== {"detail":"Todo does not exist"}
+def test_read_title():
+        client=get_client_with_Override_session()
+        todo_title="Updated Title"
+        response=client.get(f"/todos/by_title/{todo_title}")
+        assert response.status_code==200
+def test_read_title_non_existant():
+        client=get_client_with_Override_session()
+        todo_title="Excercise"
+        response=client.get(f"/todos/by_title/{todo_title}")
+        assert response.status_code==400
+        assert response.json()== {"detail":"Todo does not exist"}
+
+
+
+
+
 def test_update_main():
         client=get_client_with_Override_session()
-        todo_id=28
+        todo_id=26
         updated_todo_data={"title":"Updated Title","description":"Updated Description","complete":True}
         response=client.patch(f"/todos/{todo_id}",json=updated_todo_data)
         assert response.status_code == 200
@@ -70,7 +86,7 @@ def test_update_non_existant_todo():
         assert response.json() == {'detail': 'Todo ID not exist'}  
 def test_delete_main():
         client=get_client_with_Override_session()
-        todo_id=24
+        todo_id=27
         response=client.delete(f"/todos/{todo_id}")
         assert response.status_code == 200
         

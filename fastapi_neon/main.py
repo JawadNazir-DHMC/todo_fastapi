@@ -33,9 +33,15 @@ def create_todos(todo: Todo, session: Session = Depends(get_session)):
 def read_todos(session: Session = Depends(get_session)):
     todos = session.exec(select(Todo)).all()
     return todos
-@app.get("/todos/{todo_id}", response_model=Todo)
-def read_todos(todo_id:int,session: Session = Depends(get_session)):
+@app.get("/todos/by_id/{todo_id}", response_model=Todo)
+def read_todos_by_ID(todo_id:int,session: Session = Depends(get_session)):
     todos = session.exec(select(Todo).where(Todo.id==todo_id)).first()
+    if not todos:
+        raise HTTPException(status_code=400,detail="Todo does not exist")
+    return todos
+@app.get("/todos/by_title/{todo_title}", response_model=Todo)
+def read_todos_by_Title(todo_title:str,session: Session = Depends(get_session)):
+    todos = session.exec(select(Todo).where(Todo.title==todo_title)).first()
     if not todos:
         raise HTTPException(status_code=400,detail="Todo does not exist")
     return todos
